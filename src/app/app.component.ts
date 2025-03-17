@@ -18,7 +18,8 @@ export class AppComponent {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
 
-  categories = this.productService.getCategories;
+  categories = this.productService.categories;
+  products = this.productService.products;
   selectedCategory = '';
   showCart = false;
 
@@ -27,17 +28,9 @@ export class AppComponent {
   cartCount = this.cartService.cartCount;
   cartTotal = this.cartService.cartTotal;
 
-  // Computed signal for filtered products
-  products = computed(() => {
-    const allProducts = this.productService.products();
-    if (!this.selectedCategory) {
-      return allProducts;
-    }
-    return allProducts.filter(product => product.category === this.selectedCategory);
-  });
-
-  filterByCategory(category: string) {
+  async filterByCategory(category: string) {
     this.selectedCategory = category;
+    await this.productService.filterByCategory(category);
   }
 
   addToCart(product: Product) {
@@ -53,7 +46,6 @@ export class AppComponent {
   }
 
   checkout() {
-    // In a real app, this would connect to a payment processor
     alert('Thank you for your purchase! Total: $' + this.cartTotal().toFixed(2));
     this.cartService.clearCart();
     this.showCart = false;
