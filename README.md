@@ -57,3 +57,8 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+
+git checkout develop
+git branch -m main
+sonar-scanner -Dsonar.token=sqa_fee3bb6e8a4f728c4ae15320d4f108ed96a642bc
