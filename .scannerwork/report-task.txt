@@ -2,5 +2,5 @@ projectKey=faker19angular
 serverUrl=http://localhost:9000
 serverVersion=25.3.0.104237
 dashboardUrl=http://localhost:9000/dashboard?id=faker19angular
-ceTaskId=5212538c-ac10-4f4e-975c-7bddeaf04d55
-ceTaskUrl=http://localhost:9000/api/ce/task?id=5212538c-ac10-4f4e-975c-7bddeaf04d55
+ceTaskId=b704c15a-5c7e-451b-bba0-7e907ef30445
+ceTaskUrl=http://localhost:9000/api/ce/task?id=b704c15a-5c7e-451b-bba0-7e907ef30445
