@@ -13,10 +13,12 @@ export class ProductService {
   private productsSignal = signal<Product[]>([]);
   private categoriesSignal = signal<string[]>([]);
   private selectedCategorySignal = signal<string>('');
+  private isLoadingSignal = signal(false);
 
   // Public readonly computed signals
   readonly products = computed(() => this.productsSignal());
   readonly categories = computed(() => this.categoriesSignal());
+  readonly isLoading = computed(() => this.isLoadingSignal());
 
   constructor() {
     // Initialize data
@@ -24,6 +26,7 @@ export class ProductService {
   }
 
   private async loadInitialData() {
+    this.isLoadingSignal.set(true);
     try {
       // Load categories
       const categoriesResponse = await this.http.get<string[]>(`${this.apiUrl}/products/categories`).toPromise();
@@ -38,11 +41,14 @@ export class ProductService {
       }
     } catch (error) {
       console.error('Error loading initial data:', error);
+    } finally {
+      this.isLoadingSignal.set(false);
     }
   }
 
   async filterByCategory(category: string) {
     this.selectedCategorySignal.set(category);
+    this.isLoadingSignal.set(true);
     
     try {
       if (!category) {
@@ -59,6 +65,8 @@ export class ProductService {
     } catch (error) {
       console.error('Error filtering products:', error);
       // In case of error, keep existing products
+    } finally {
+      this.isLoadingSignal.set(false);
     }
   }
 }

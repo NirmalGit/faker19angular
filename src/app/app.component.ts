@@ -20,6 +20,7 @@ export class AppComponent {
 
   categories = this.productService.categories;
   products = this.productService.products;
+  isLoading = this.productService.isLoading;
   selectedCategory = '';
   showCart = false;
 
