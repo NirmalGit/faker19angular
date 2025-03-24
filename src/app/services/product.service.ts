@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Product } from '../interfaces/product.interface';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -21,26 +22,29 @@ export class ProductService {
   readonly isLoading = computed(() => this.isLoadingSignal());
 
   constructor() {
-    // Initialize data
-    this.loadInitialData();
+    // Load categories in constructor
+    this.loadCategories();
+    // Also load products initially
+    this.fetchAllProducts();
   }
 
-  private async loadInitialData() {
+  private async loadCategories() {
+    try {
+      const categoriesResponse = await lastValueFrom(this.http.get<string[]>(`${this.apiUrl}/products/categories`));
+      this.categoriesSignal.set(categoriesResponse);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  }
+
+  // Public method to load products - renamed to be more explicit
+  async fetchAllProducts() {
     this.isLoadingSignal.set(true);
     try {
-      // Load categories
-      const categoriesResponse = await this.http.get<string[]>(`${this.apiUrl}/products/categories`).toPromise();
-      if (categoriesResponse) {
-        this.categoriesSignal.set(categoriesResponse);
-      }
-
-      // Load initial products
-      const productsResponse = await this.http.get<Product[]>(`${this.apiUrl}/products`).toPromise();
-      if (productsResponse) {
-        this.productsSignal.set(productsResponse);
-      }
+      const productsResponse = await lastValueFrom(this.http.get<Product[]>(`${this.apiUrl}/products`));
+      this.productsSignal.set(productsResponse);
     } catch (error) {
-      console.error('Error loading initial data:', error);
+      console.error('Error loading products:', error);
     } finally {
       this.isLoadingSignal.set(false);
     }
@@ -52,19 +56,15 @@ export class ProductService {
     
     try {
       if (!category) {
-        const allProducts = await this.http.get<Product[]>(`${this.apiUrl}/products`).toPromise();
-        if (allProducts) {
-          this.productsSignal.set(allProducts);
-        }
+        await this.fetchAllProducts();
       } else {
-        const filteredProducts = await this.http.get<Product[]>(`${this.apiUrl}/products/category/${category}`).toPromise();
-        if (filteredProducts) {
-          this.productsSignal.set(filteredProducts);
-        }
+        const filteredProducts = await lastValueFrom(
+          this.http.get<Product[]>(`${this.apiUrl}/products/category/${category}`)
+        );
+        this.productsSignal.set(filteredProducts);
       }
     } catch (error) {
       console.error('Error filtering products:', error);
-      // In case of error, keep existing products
     } finally {
       this.isLoadingSignal.set(false);
     }

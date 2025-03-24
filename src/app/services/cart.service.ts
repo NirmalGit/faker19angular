@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Product } from '../interfaces/product.interface';
+import { Subject } from 'rxjs';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -9,60 +10,86 @@ export interface CartItem extends Product {
   providedIn: 'root'
 })
 export class CartService {
-  private cartItems = signal<CartItem[]>([]);
-  
-  getCart = this.cartItems.asReadonly();
-  
-  cartCount = signal(0);
-  cartTotal = signal(0);
+  private cart = signal<CartItem[]>([]);
+  cartToggle = new Subject<void>();
 
+  constructor() {
+    // Load cart from localStorage if exists
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        this.cart.set(JSON.parse(savedCart));
+      } catch (e) {
+        console.error('Error parsing cart from localStorage:', e);
+      }
+    }
+  }
+
+  // Cart state accessors
+  get getCart() {
+    return this.cart;
+  }
+
+  get cartCount() {
+    return () => this.cart().reduce((count, item) => count + item.quantity, 0);
+  }
+
+  get cartTotal() {
+    return () => this.cart().reduce((total, item) => total + (item.price * item.quantity), 0);
+  }
+
+  // Cart actions
   addToCart(product: Product) {
-    const currentCart = this.cartItems();
+    const currentCart = this.cart();
     const existingItem = currentCart.find(item => item.id === product.id);
 
     if (existingItem) {
-      this.cartItems.update(items => 
-        items.map(item => 
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+      // Update quantity if item already exists
+      const updatedCart = currentCart.map(item => 
+        item.id === product.id 
+          ? { ...item, quantity: item.quantity + 1 } 
+          : item
       );
+      this.cart.set(updatedCart);
     } else {
-      this.cartItems.update(items => [...items, { ...product, quantity: 1 }]);
+      // Add new item
+      this.cart.set([...currentCart, { ...product, quantity: 1 }]);
     }
-    this.updateCartStats();
+
+    this.saveCart();
   }
 
   removeFromCart(productId: number) {
-    this.cartItems.update(items => items.filter(item => item.id !== productId));
-    this.updateCartStats();
+    const updatedCart = this.cart().filter(item => item.id !== productId);
+    this.cart.set(updatedCart);
+    this.saveCart();
   }
 
   updateQuantity(productId: number, quantity: number) {
-    if (quantity <= 0) {
+    if (quantity < 1) {
       this.removeFromCart(productId);
       return;
     }
-    
-    this.cartItems.update(items =>
-      items.map(item =>
-        item.id === productId
-          ? { ...item, quantity }
-          : item
-      )
+
+    const updatedCart = this.cart().map(item => 
+      item.id === productId 
+        ? { ...item, quantity } 
+        : item
     );
-    this.updateCartStats();
+    this.cart.set(updatedCart);
+    this.saveCart();
   }
 
   clearCart() {
-    this.cartItems.set([]);
-    this.updateCartStats();
+    this.cart.set([]);
+    this.saveCart();
   }
 
-  private updateCartStats() {
-    const cart = this.cartItems();
-    this.cartCount.set(cart.reduce((total, item) => total + item.quantity, 0));
-    this.cartTotal.set(cart.reduce((total, item) => total + (item.price * item.quantity), 0));
+  private saveCart() {
+    localStorage.setItem('cart', JSON.stringify(this.cart()));
+  }
+
+  toggleCart() {
+    this.cartToggle.next();
   }
 }

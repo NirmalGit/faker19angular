@@ -1,54 +1,44 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { ProductService } from './services/product.service';
 import { CartService } from './services/cart.service';
-import { HttpClientModule } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
-import { Product } from './interfaces/product.interface';
+import { AuthService, User } from './services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HttpClientModule, FormsModule],
+  imports: [CommonModule, RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
-  private productService = inject(ProductService);
+export class AppComponent implements OnInit {
   private cartService = inject(CartService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
-  categories = this.productService.categories;
-  products = this.productService.products;
-  isLoading = this.productService.isLoading;
-  selectedCategory = '';
-  showCart = false;
+  currentUser: User | null = null;
 
-  // Cart signals
-  cart = this.cartService.getCart;
+  // Cart signals for display
   cartCount = this.cartService.cartCount;
   cartTotal = this.cartService.cartTotal;
 
-  async filterByCategory(category: string) {
-    this.selectedCategory = category;
-    await this.productService.filterByCategory(category);
+  ngOnInit(): void {
+    this.authService.currentUser.subscribe(user => {
+      this.currentUser = user;
+      // Redirect to login if not authenticated
+      if (!user) {
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
-  addToCart(product: Product) {
-    this.cartService.addToCart(product);
+  logout(): void {
+    this.authService.logout();
   }
 
-  removeFromCart(productId: number) {
-    this.cartService.removeFromCart(productId);
-  }
-
-  updateQuantity(productId: number, quantity: number) {
-    this.cartService.updateQuantity(productId, quantity);
-  }
-
-  checkout() {
-    alert('Thank you for your purchase! Total: $' + this.cartTotal().toFixed(2));
-    this.cartService.clearCart();
-    this.showCart = false;
+  toggleCart(): void {
+    // We'll emit an event that the ProductsComponent can listen to
+    this.cartService.toggleCart();
   }
 }
