@@ -11,8 +11,7 @@ import { Subscription } from 'rxjs';
   selector: 'app-products',
   standalone: true,
   imports: [CommonModule, HttpClientModule, FormsModule],
-  templateUrl: './products.component.html',
-  styleUrl: './products.component.scss'
+  templateUrl: './products.component.html'
 })
 export class ProductsComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
