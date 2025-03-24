@@ -77,3 +77,6 @@ sonar-scanner -Dsonar.token=sqa_fee3bb6e8a4f728c4ae15320d4f108ed96a642bc
 
 After scanning, you can rename it back:
 git branch -m develop
+
+
+ng build --configuration production --base-href /angular2faker/
